@@ -287,6 +287,7 @@ else()
 
 	if ( UNIX )
 		include(CheckSymbolExists)
+include(cmake/CheckFunctions.cmake)
 		check_symbol_exists( "fts_set" "sys/types.h;sys/stat.h;fts.h" HAVE_FTS )
 		if ( NOT HAVE_FTS )
 			include ( FindPkgConfig )
