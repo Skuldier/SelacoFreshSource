@@ -1,0 +1,65 @@
+# Alternate Archipelago configuration using prebuilt libwebsockets
+# Add this to your CMakeLists.txt instead of the FetchContent approach
+
+option(ENABLE_ARCHIPELAGO "Enable Archipelago multiworld support" ON)
+
+if(ENABLE_ARCHIPELAGO)
+    message(STATUS "Building with Archipelago support")
+    
+    # Use vcpkg or manual libwebsockets instead of FetchContent
+    find_package(websockets CONFIG)
+    
+    if(NOT websockets_FOUND)
+        message(STATUS "libwebsockets not found via find_package, using FetchContent with fixes")
+        
+        include(FetchContent)
+        
+        # Define target_architecture macro that libwebsockets needs
+        macro(target_architecture output_var)
+            if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+                set(${output_var} "x64")
+            else()
+                set(${output_var} "x86")
+            endif()
+        endmacro()
+        
+        # Fetch libwebsockets
+        FetchContent_Declare(
+            libwebsockets
+            GIT_REPOSITORY https://github.com/warmcat/libwebsockets.git
+            GIT_TAG v4.3.3
+        )
+        
+        # Set all options before FetchContent_MakeAvailable
+        set(LWS_WITH_SSL ON CACHE BOOL "" FORCE)
+        set(LWS_WITHOUT_TESTAPPS ON CACHE BOOL "" FORCE)
+        set(LWS_WITHOUT_TEST_SERVER ON CACHE BOOL "" FORCE)
+        set(LWS_WITHOUT_TEST_CLIENT ON CACHE BOOL "" FORCE)
+        set(LWS_WITH_MINIMAL_EXAMPLES OFF CACHE BOOL "" FORCE)
+        set(LWS_WITH_BUNDLED_ZLIB ON CACHE BOOL "" FORCE)
+        set(LWS_WITH_HTTP2 OFF CACHE BOOL "" FORCE)
+        set(LWS_WITHOUT_EXTENSIONS ON CACHE BOOL "" FORCE)
+        set(LWS_WITHOUT_DAEMONIZE ON CACHE BOOL "" FORCE)
+        set(LWS_WITHOUT_SERVER ON CACHE BOOL "" FORCE)
+        
+        FetchContent_MakeAvailable(libwebsockets)
+    endif()
+    
+    # JSON library
+    FetchContent_Declare(
+        json
+        GIT_REPOSITORY https://github.com/nlohmann/json.git
+        GIT_TAG v3.11.3
+    )
+    FetchContent_MakeAvailable(json)
+    
+    # Add Archipelago sources to FASTMATH_SOURCES
+    list(APPEND FASTMATH_SOURCES
+        archipelago/archipelago_websocket.cpp
+        archipelago/archipelago_protocol.cpp
+        archipelago/archipelago_integration.cpp
+        archipelago/archipelago_ccmds.cpp
+    )
+    
+    add_definitions(-DARCHIPELAGO_SUPPORT)
+endif()

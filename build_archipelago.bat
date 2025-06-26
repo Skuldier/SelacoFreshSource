@@ -49,10 +49,10 @@ echo ========================================
 echo Build completed successfully!
 echo ========================================
 echo.
-echo Executable location: build-archipelago\Release\selaco.exe
+echo Executable location: build-archipelago\Release\zdoom.exe
 echo.
 echo To test Archipelago support:
-echo 1. Run selaco.exe
+echo 1. Run zdoom.exe
 echo 2. Open console with ~ key
 echo 3. Type: ap_connect archipelago.gg
 echo 4. Type: ap_auth YourSlotName

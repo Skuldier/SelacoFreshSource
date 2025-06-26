@@ -1765,7 +1765,26 @@ static ArchipelagoCommandRegistrar registrar;
             self.log("Could not find suitable insertion point in CMakeLists.txt", "ERROR")
             return False
         
+        # Find insertion point
+        insert_markers = [
+            "option(NO_OPENAL",
+            "option(FORCE_INTERNAL_ZLIB",
+            "option(DYN_OPENAL",
+            "endif()"
+        ]
+        
+        insert_marker = None
+        for marker in insert_markers:
+            if marker in content:
+                insert_marker = marker
+                break
+        
+        if not insert_marker:
+            self.log("Could not find suitable insertion point in CMakeLists.txt", "ERROR")
+            return False
+        
         # Insert the archipelago configuration
+        # Based on Selaco's CMakeLists.txt structure, we know it uses FASTMATH_SOURCES
         archipelago_config = '''
 # =============================================================================
 # ARCHIPELAGO WEBSOCKET SUPPORT
@@ -1777,6 +1796,15 @@ if(ENABLE_ARCHIPELAGO)
     message(STATUS "Building with Archipelago support")
     
     include(FetchContent)
+    
+    # Define target_architecture macro for libwebsockets
+    macro(target_architecture output_var)
+        if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+            set(${output_var} "x64")
+        else()
+            set(${output_var} "x86")
+        endif()
+    endmacro()
     
     # libwebsockets
     FetchContent_Declare(
@@ -1792,6 +1820,9 @@ if(ENABLE_ARCHIPELAGO)
     set(LWS_WITH_MINIMAL_EXAMPLES OFF CACHE BOOL "" FORCE)
     set(LWS_WITH_BUNDLED_ZLIB ON CACHE BOOL "" FORCE)
     set(LWS_WITH_HTTP2 OFF CACHE BOOL "" FORCE)
+    set(LWS_WITHOUT_EXTENSIONS ON CACHE BOOL "" FORCE)
+    set(LWS_WITHOUT_DAEMONIZE ON CACHE BOOL "" FORCE)
+    set(LWS_WITHOUT_SERVER ON CACHE BOOL "" FORCE)
     
     if(WIN32)
         set(LWS_WITH_MBEDTLS OFF CACHE BOOL "" FORCE)
@@ -1808,7 +1839,7 @@ if(ENABLE_ARCHIPELAGO)
     )
     FetchContent_MakeAvailable(json)
     
-    # Add Archipelago sources
+    # Add Archipelago sources to FASTMATH_SOURCES (which is included in GAME_SOURCES)
     list(APPEND FASTMATH_SOURCES
         archipelago/archipelago_websocket.cpp
         archipelago/archipelago_protocol.cpp
@@ -1827,20 +1858,10 @@ endif()
         new_content = content[:line_end+1] + archipelago_config + content[line_end+1:]
         
         # Also need to find and patch target_link_libraries
-        # Find the main executable target (could be selaco, zdoom, etc.)
-        possible_targets = ["zdoom", "selaco", "gzdoom"]
-        target_name = None
+        # Based on Selaco's CMakeLists.txt, the target is named 'zdoom'
+        target_name = "zdoom"
         
-        for target in possible_targets:
-            if f"add_executable( {target}" in new_content or f"add_executable({target}" in new_content:
-                target_name = target
-                break
-        
-        if not target_name:
-            self.log("Could not determine executable target name", "WARN")
-            target_name = "zdoom"  # Default guess
-        
-        # Find target_link_libraries for the main target
+        # Find target_link_libraries for zdoom
         link_pattern = f"target_link_libraries( {target_name}" 
         link_pattern2 = f"target_link_libraries({target_name}"
         
@@ -1999,10 +2020,10 @@ echo ========================================
 echo Build completed successfully!
 echo ========================================
 echo.
-echo Executable location: build-archipelago\\Release\\selaco.exe
+echo Executable location: build-archipelago\\Release\\zdoom.exe
 echo.
 echo To test Archipelago support:
-echo 1. Run selaco.exe
+echo 1. Run zdoom.exe
 echo 2. Open console with ~ key
 echo 3. Type: ap_connect archipelago.gg
 echo 4. Type: ap_auth YourSlotName

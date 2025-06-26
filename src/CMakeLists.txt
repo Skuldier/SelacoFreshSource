@@ -37,7 +37,13 @@ if(ENABLE_ARCHIPELAGO)
         set(LWS_OPENSSL_SUPPORT ON CACHE BOOL "" FORCE)
     endif()
     
-    FetchContent_MakeAvailable(libwebsockets)
+        
+    # Additional libwebsockets options to avoid build issues
+    set(LWS_WITHOUT_EXTENSIONS ON CACHE BOOL "" FORCE)
+    set(LWS_WITHOUT_DAEMONIZE ON CACHE BOOL "" FORCE)
+    set(LWS_WITHOUT_SERVER ON CACHE BOOL "" FORCE)
+    
+FetchContent_MakeAvailable(libwebsockets)
     
     # JSON library
     FetchContent_Declare(
@@ -58,6 +64,16 @@ if(ENABLE_ARCHIPELAGO)
     add_definitions(-DARCHIPELAGO_SUPPORT)
 endif()
 
+
+
+# Define target_architecture macro (needed by libwebsockets)
+macro(target_architecture output_var)
+    if(CMAKE_SIZEOF_VOID_P EQUAL 8)
+        set(${output_var} "x64")
+    else()
+        set(${output_var} "x86")
+    endif()
+endmacro()
 
 include( CheckCXXSourceCompiles )
 include( CheckFunctionExists )
