@@ -30,10 +30,6 @@
 
 #ifdef _WIN32
 #include <direct.h>
-
-#ifdef ARCHIPELAGO_SUPPORT
-#include "archipelago/archipelago_integration.h"
-#endif
 #endif
 
 #if defined(__unix__) || defined(__APPLE__)
@@ -231,11 +227,6 @@ extern FName MessageBoxClass;
 
 CUSTOM_CVAR(Float, i_timescale, 1.0f, CVAR_NOINITCALL | CVAR_VIRTUAL | CVAR_CHEAT)
 {
-
-#ifdef ARCHIPELAGO_SUPPORT
-    // Update Archipelago client
-    AP_Update();
-#endif
 	if (netgame)
 	{
 		Printf("Time scale cannot be changed in net games.\n");

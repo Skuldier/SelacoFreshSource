@@ -6,59 +6,6 @@ if( COMMAND cmake_policy )
 	cmake_policy( SET CMP0003 NEW )
 endif()
 
-# =============================================================================
-# ARCHIPELAGO WEBSOCKET SUPPORT
-# =============================================================================
-
-option(ENABLE_ARCHIPELAGO "Enable Archipelago multiworld support" ON)
-
-if(ENABLE_ARCHIPELAGO)
-    message(STATUS "Building with Archipelago support")
-    
-    include(FetchContent)
-    
-    # libwebsockets
-    FetchContent_Declare(
-        libwebsockets
-        GIT_REPOSITORY https://github.com/warmcat/libwebsockets.git
-        GIT_TAG v4.3.3
-    )
-    
-    set(LWS_WITH_SSL ON CACHE BOOL "" FORCE)
-    set(LWS_WITHOUT_TESTAPPS ON CACHE BOOL "" FORCE)
-    set(LWS_WITHOUT_TEST_SERVER ON CACHE BOOL "" FORCE)
-    set(LWS_WITHOUT_TEST_CLIENT ON CACHE BOOL "" FORCE)
-    set(LWS_WITH_MINIMAL_EXAMPLES OFF CACHE BOOL "" FORCE)
-    set(LWS_WITH_BUNDLED_ZLIB ON CACHE BOOL "" FORCE)
-    set(LWS_WITH_HTTP2 OFF CACHE BOOL "" FORCE)
-    
-    if(WIN32)
-        set(LWS_WITH_MBEDTLS OFF CACHE BOOL "" FORCE)
-        set(LWS_OPENSSL_SUPPORT ON CACHE BOOL "" FORCE)
-    endif()
-    
-    FetchContent_MakeAvailable(libwebsockets)
-    
-    # JSON library
-    FetchContent_Declare(
-        json
-        GIT_REPOSITORY https://github.com/nlohmann/json.git
-        GIT_TAG v3.11.3
-    )
-    FetchContent_MakeAvailable(json)
-    
-    # Add Archipelago sources
-    list(APPEND FASTMATH_SOURCES
-        archipelago/archipelago_websocket.cpp
-        archipelago/archipelago_protocol.cpp
-        archipelago/archipelago_integration.cpp
-        archipelago/archipelago_ccmds.cpp
-    )
-    
-    add_definitions(-DARCHIPELAGO_SUPPORT)
-endif()
-
-
 include( CheckCXXSourceCompiles )
 include( CheckFunctionExists )
 include( CheckCXXCompilerFlag )
@@ -1323,13 +1270,7 @@ if( UNIX )
 	endif()
 endif()
 
-target_link_libraries( zdoom ${PROJECT_LIBRARIES} lzma ${ZMUSIC_LIBRARIES} 
-    $<$<BOOL:${ENABLE_ARCHIPELAGO}>:websockets>
-    $<$<BOOL:${ENABLE_ARCHIPELAGO}>:nlohmann_json::nlohmann_json>
-    $<$<AND:$<BOOL:${ENABLE_ARCHIPELAGO}>,$<PLATFORM_ID:Windows>>:ws2_32>
-    $<$<AND:$<BOOL:${ENABLE_ARCHIPELAGO}>,$<PLATFORM_ID:Windows>>:iphlpapi>
-    $<$<AND:$<BOOL:${ENABLE_ARCHIPELAGO}>,$<PLATFORM_ID:Windows>>:crypt32>
-)
+target_link_libraries( zdoom ${PROJECT_LIBRARIES} lzma ${ZMUSIC_LIBRARIES} )
 
 include_directories(
 	BEFORE
